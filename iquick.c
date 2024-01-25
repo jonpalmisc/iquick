@@ -30,18 +30,19 @@ typedef enum {
     COMMAND_EXIT_RECOVERY,
 } command_t;
 
-command_t parse_command(char const *command_str)
+command_t parse_command(char const *command_flag)
 {
-    if (strcmp(command_str, "-h") == 0)
-        return COMMAND_HELP;
-    if (strcmp(command_str, "-s") == 0)
-        return COMMAND_SHUTDOWN;
-    if (strcmp(command_str, "-r") == 0)
-        return COMMAND_RESTART;
-    if (strcmp(command_str, "-R") == 0)
-        return COMMAND_ENTER_RECOVERY;
-    if (strcmp(command_str, "-u") == 0)
-        return COMMAND_EXIT_RECOVERY;
+#define MATCH_COMMAND(FLAG, COMMAND)         \
+    do {                                     \
+        if (strcmp(command_flag, FLAG) == 0) \
+            return COMMAND;                  \
+    } while (0)
+
+    MATCH_COMMAND("-h", COMMAND_HELP);
+    MATCH_COMMAND("-s", COMMAND_SHUTDOWN);
+    MATCH_COMMAND("-r", COMMAND_RESTART);
+    MATCH_COMMAND("-R", COMMAND_ENTER_RECOVERY);
+    MATCH_COMMAND("-u", COMMAND_EXIT_RECOVERY);
 
     return COMMAND_NONE;
 }
