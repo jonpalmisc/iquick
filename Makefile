@@ -1,5 +1,5 @@
 CFLAGS		+= -Wall -Wextra
-LDFLAGS		+= -limobiledevice-1.0
+LDFLAGS		+= -limobiledevice-1.0 -lirecovery-1.0.3
 
 ifneq ($(DEBUG),)
   CFLAGS	+= -g
