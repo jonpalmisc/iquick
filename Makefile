@@ -1,3 +1,5 @@
+PREFIX		?= /usr/local
+
 CFLAGS		+= -Wall -Wextra
 LDFLAGS		+= -limobiledevice-1.0 -lirecovery-1.0.3
 
@@ -15,6 +17,10 @@ all: $(IQUICK_T)
 
 $(IQUICK_T): $(IQUICK_S)
 	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $^
+
+..PHONY: install
+install: $(IQUICK_T)
+	install $(IQUICK_T) $(PREFIX)/bin
 
 .PHONY: clean
 clean:
