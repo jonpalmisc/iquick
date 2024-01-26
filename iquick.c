@@ -15,15 +15,19 @@ void print_usage(char const *program)
 
     puts("Options:");
     puts("  -h        Show help and usage info");
+    puts("  -e        Show the ECID of the device (in recovery)");
+    puts("  -u        Show the UDID of the device");
     puts("  -s        Shut down the device");
     puts("  -r        Restart the device");
     puts("  -R        Put the device into recovery mode");
-    puts("  -u        Take the device out of recovery mode");
+    puts("  -x        Take the device out of recovery mode");
 }
 
 typedef enum {
     COMMAND_NONE,
     COMMAND_HELP,
+    COMMAND_SHOW_ECID,
+    COMMAND_SHOW_UDID,
     COMMAND_SHUTDOWN,
     COMMAND_RESTART,
     COMMAND_ENTER_RECOVERY,
@@ -39,12 +43,34 @@ command_t parse_command(char const *command_flag)
     } while (0)
 
     MATCH_COMMAND("-h", COMMAND_HELP);
+    MATCH_COMMAND("-e", COMMAND_SHOW_ECID);
+    MATCH_COMMAND("-u", COMMAND_SHOW_UDID);
     MATCH_COMMAND("-s", COMMAND_SHUTDOWN);
     MATCH_COMMAND("-r", COMMAND_RESTART);
     MATCH_COMMAND("-R", COMMAND_ENTER_RECOVERY);
-    MATCH_COMMAND("-u", COMMAND_EXIT_RECOVERY);
+    MATCH_COMMAND("-x", COMMAND_EXIT_RECOVERY);
 
     return COMMAND_NONE;
+}
+
+int do_show_udid(lockdownd_client_t lockdown)
+{
+    char *udid = NULL;
+    int error = lockdownd_get_device_udid(lockdown, &udid);
+    if (error != LOCKDOWN_E_SUCCESS)
+        return 1;
+
+    puts(udid);
+
+    return 0;
+}
+
+int do_show_ecid(irecv_client_t client)
+{
+    struct irecv_device_info const *device_info = irecv_get_device_info(client);
+    printf("0x%llx\n", device_info->ecid);
+
+    return 0;
 }
 
 int do_enter_recovery(lockdownd_client_t lockdown)
@@ -121,6 +147,9 @@ int do_lockdown_command(command_t command)
 
     int result = 0;
     switch (command) {
+    case COMMAND_SHOW_UDID:
+        result = do_show_udid(lockdown);
+        break;
     case COMMAND_SHUTDOWN:
         result = do_shutdown(device, lockdown, /*restart=*/0);
         break;
@@ -185,6 +214,9 @@ int do_recovery_command(command_t command)
 
     int result = 0;
     switch (command) {
+    case COMMAND_SHOW_ECID:
+        result = do_show_ecid(client);
+        break;
     case COMMAND_EXIT_RECOVERY:
         result = do_exit_recovery(client);
         break;
@@ -207,11 +239,13 @@ int main(int argc, char const **argv)
 
     command_t command = parse_command(argv[1]);
     switch (command) {
+    case COMMAND_SHOW_UDID:
     case COMMAND_SHUTDOWN:
     case COMMAND_RESTART:
     case COMMAND_ENTER_RECOVERY:
         return do_lockdown_command(command);
         break;
+    case COMMAND_SHOW_ECID:
     case COMMAND_EXIT_RECOVERY:
         return do_recovery_command(command);
     case COMMAND_HELP:
